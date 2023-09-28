@@ -1,0 +1,10 @@
+{
+    "database" : {
+        "host" : "",
+        "user": "",
+        "password": "",
+        "db": ""
+    },
+
+    "jwtsecret": ""
+}

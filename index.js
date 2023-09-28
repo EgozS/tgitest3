@@ -1,14 +1,17 @@
+//imports
 const express = require('express');
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const config = require('./config.json');
 
+//constants
 const app = express();
 const port = 3000;
 const saltRounds = 10;
 
-
+//database connection
 const con = mysql.createConnection({
     host: config.database.host,
     user: config.database.user,
@@ -16,10 +19,22 @@ const con = mysql.createConnection({
     database: config.database.db
 });
 
+const loginLim = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+});
+const registerLim = rateLimit({
+    windowMs: 1 * 60 * 1000, // 15 minutes
+    max: 5 // limit each IP to 100 requests per windowMs
+});
+
+app.use('/auth/login/', loginLim);
+app.use('/auth/register/', registerLim);
+
 //this function generates a session token for a user that logged in
 //input: payload, secret key, expiration time(optional)
 //output: token
-function generateToken(payload, secretKey, expiresIn = '1h') {
+function generateToken(payload, secretKey, expiresIn = '2h') {
     try 
     {
       // Create the token with the payload, secret key, and optional expiration time
@@ -107,8 +122,12 @@ app.get('/auth/login/', (req, res) => {
     if(username && password) 
     {
         //check username and password
-        con.query('SELECT Username, Password FROM accounts WHERE Username = ?', username, (err, dResult) => {
+        con.query('SELECT Username, Password, Id FROM accounts WHERE Username = ?', [username], (err, dResult) => {
             if(err) throw err;
+            if(dResult.length == 0) {
+                res.status(401).json({ token: 'login failed' });
+                return;
+            }
             bcrypt.compare(password, dResult[0].Password, (err, result) => { //checking hashed password
                 if(err) throw err;
                 if(result) {
@@ -134,10 +153,13 @@ app.get('/auth/login/', (req, res) => {
     }
     else
     {
+        console.log("usename: " + username);
+        console.log("password: " + password);
         res.status(422).json({ message: 'invalid username or password' });
     }
 });
 
+//wrong path (404)
 app.get('*', (req, res) => {
     res.status(404).json({ message: 'Path Not Found' });
 });
