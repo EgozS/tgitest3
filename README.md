@@ -2,7 +2,7 @@
 
 This API provides endpoints for user registration and login, as well as access to a protected route. It uses JSON Web Tokens (JWT) for authentication.
 
-# exmaple app:
+- exmaple app
 https://github.com/SkepSickomode/tgitest3app
 
 
