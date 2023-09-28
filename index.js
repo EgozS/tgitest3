@@ -153,8 +153,6 @@ app.get('/auth/login/', (req, res) => {
     }
     else
     {
-        console.log("usename: " + username);
-        console.log("password: " + password);
         res.status(422).json({ message: 'invalid username or password' });
     }
 });
